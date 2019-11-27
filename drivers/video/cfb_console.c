@@ -113,6 +113,8 @@
 #define VIDEO_DATA_FORMAT	(pGD->gdfIndex)
 #define VIDEO_FB_ADRS		(pGD->frameAdrs)
 
+#define CONFIG_HIDE_LOGO_VERSION
+
 /*
  * Console device
  */

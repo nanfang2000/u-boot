@@ -9,7 +9,7 @@
 #include <dt-bindings/gpio/gpio.h>
 
 / {
-	model = "Lichee Pi Nano";
+	model = "PyScreen (F1C100S/F1C200S)";
 	compatible = "licheepi,licheepi-nano", "allwinner,suniv-f1c100s",
 		     "allwinner,suniv";
 

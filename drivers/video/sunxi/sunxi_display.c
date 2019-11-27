@@ -579,6 +579,8 @@ static void sunxi_lcdc_panel_enable(void)
 
 	if (reset_pin >= 0)
 		gpio_direction_output(reset_pin, 1); /* De-assert reset */
+	sunxi_gpio_set_cfgpin(SUNXI_GPE(6), SUNXI_GPIO_OUTPUT);
+
 }
 
 static void sunxi_lcdc_backlight_enable(void)
@@ -608,6 +610,8 @@ static void sunxi_lcdc_backlight_enable(void)
 #endif
 	if (pin >= 0)
 		gpio_direction_output(pin, PWM_ON);
+
+	printf("sunxi_lcdc_backlight_enable PWM Pin:%d\n",pin);
 }
 
 static void sunxi_ctfb_mode_to_display_timing(const struct ctfb_res_modes *mode,

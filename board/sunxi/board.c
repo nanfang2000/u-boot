@@ -77,6 +77,499 @@ static int soft_i2c_board_init(void)
 static int soft_i2c_board_init(void) { return 0; }
 #endif
 
+#define LCD_SPI_CS(a)	gpio_set_value(SUNXI_GPE(7), a)
+#define SPI_DCLK(a)	gpio_set_value(SUNXI_GPE(9), a)
+#define SPI_SDA(a)	gpio_set_value(SUNXI_GPE(8), a)
+
+volatile void LCD_delay(int j)
+{
+	volatile uint16_t i;	
+	while(j--)
+	for(i=7200;i>0;i--);
+}
+void LCD_WriteByteSPI(unsigned char byte)
+{
+		unsigned char n;
+   
+   for(n=0; n<8; n++)			
+   {  
+	  if(byte&0x80) SPI_SDA(1);
+      	else SPI_SDA(0);
+      byte<<= 1;
+		 
+	  SPI_DCLK(0);
+    SPI_DCLK(1);
+   }
+}
+static void SPI_WriteComm(uint16_t CMD)
+{	
+    LCD_SPI_CS(0);
+	LCD_WriteByteSPI(0X20);
+	LCD_WriteByteSPI(CMD>>8);
+	LCD_WriteByteSPI(0X00);
+	LCD_WriteByteSPI(CMD);
+	
+	LCD_SPI_CS(1);
+	// uint8_t cmd[4] = {0x20, CMD>>8, 0x00, CMD};		
+	// spi_device_select(spi_lcd_dev);
+	// spi_device_write_then_read(spi_lcd_dev, &cmd, 4, 0, 0);
+	// spi_device_deselect(spi_lcd_dev);
+}
+static void SPI_WriteData(uint16_t tem_data)
+{	
+    LCD_SPI_CS(0);
+	LCD_WriteByteSPI(0x40);
+	LCD_WriteByteSPI(tem_data);
+	LCD_SPI_CS(1);
+
+	// uint8_t cmd[2] = {0x40, tem_data};			
+	// spi_device_select(spi_lcd_dev);
+	// spi_device_write_then_read(spi_lcd_dev, &cmd, 2, 0, 0);
+	// spi_device_deselect(spi_lcd_dev);
+}
+static void LCD_Reset(void)
+{			
+	//注意，现在科学发达，有的屏不用复位也行 
+    gpio_set_value(SUNXI_GPE(5), 0);
+    LCD_delay(200);					   
+    gpio_set_value(SUNXI_GPE(5), 1);	 
+    LCD_delay(200);	
+}
+
+static int soft_spi_board_init(void)
+{
+	int ret;
+	printf("soft_spi_board_init\n");
+	// SPI 3 lines for LCD driver chipe initialization
+	sunxi_gpio_set_cfgpin(SUNXI_GPE(5), SUNXI_GPIO_OUTPUT); //RST
+	sunxi_gpio_set_cfgpin(SUNXI_GPE(7), SUNXI_GPIO_OUTPUT); //CS
+	sunxi_gpio_set_cfgpin(SUNXI_GPE(8), SUNXI_GPIO_OUTPUT); //DAT
+	sunxi_gpio_set_cfgpin(SUNXI_GPE(9), SUNXI_GPIO_OUTPUT); //CLK
+
+    LCD_Reset();
+	
+    SPI_WriteComm(0xf000);SPI_WriteData(0x0055);	
+    SPI_WriteComm(0xf001);SPI_WriteData(0x00aa);	
+    SPI_WriteComm(0xf002);SPI_WriteData(0x0052);	
+    SPI_WriteComm(0xf003);SPI_WriteData(0x0008);	
+    SPI_WriteComm(0xf004);SPI_WriteData(0x0001);	
+                                            
+    SPI_WriteComm(0xbc01);SPI_WriteData(0x0086);	
+    SPI_WriteComm(0xbc02);SPI_WriteData(0x006a);	
+    SPI_WriteComm(0xbd01);SPI_WriteData(0x0086);	
+    SPI_WriteComm(0xbd02);SPI_WriteData(0x006a);	
+    SPI_WriteComm(0xbe01);SPI_WriteData(0x0067);	
+                                            
+    SPI_WriteComm(0xd100);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd101);SPI_WriteData(0x005d);	
+    SPI_WriteComm(0xd102);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd103);SPI_WriteData(0x006b);	
+    SPI_WriteComm(0xd104);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd105);SPI_WriteData(0x0084);	
+    SPI_WriteComm(0xd106);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd107);SPI_WriteData(0x009c);	
+    SPI_WriteComm(0xd108);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd109);SPI_WriteData(0x00b1);	
+    SPI_WriteComm(0xd10a);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd10b);SPI_WriteData(0x00d9);	
+    SPI_WriteComm(0xd10c);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd10d);SPI_WriteData(0x00fd);	
+    SPI_WriteComm(0xd10e);SPI_WriteData(0x0001);	
+    SPI_WriteComm(0xd10f);SPI_WriteData(0x0038);	
+    SPI_WriteComm(0xd110);SPI_WriteData(0x0001);	
+    SPI_WriteComm(0xd111);SPI_WriteData(0x0068);	
+    SPI_WriteComm(0xd112);SPI_WriteData(0x0001);	
+    SPI_WriteComm(0xd113);SPI_WriteData(0x00b9);	
+    SPI_WriteComm(0xd114);SPI_WriteData(0x0001);	
+    SPI_WriteComm(0xd115);SPI_WriteData(0x00fb);	
+    SPI_WriteComm(0xd116);SPI_WriteData(0x0002);	
+    SPI_WriteComm(0xd117);SPI_WriteData(0x0063);	
+    SPI_WriteComm(0xd118);SPI_WriteData(0x0002);	
+    SPI_WriteComm(0xd119);SPI_WriteData(0x00b9);	
+    SPI_WriteComm(0xd11a);SPI_WriteData(0x0002);	
+    SPI_WriteComm(0xd11b);SPI_WriteData(0x00bb);	
+    SPI_WriteComm(0xd11c);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd11d);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd11e);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd11f);SPI_WriteData(0x0046);	
+    SPI_WriteComm(0xd120);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd121);SPI_WriteData(0x0069);	
+    SPI_WriteComm(0xd122);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd123);SPI_WriteData(0x008f);	
+    SPI_WriteComm(0xd124);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd125);SPI_WriteData(0x00a4);	
+    SPI_WriteComm(0xd126);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd127);SPI_WriteData(0x00b9);	
+    SPI_WriteComm(0xd128);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd129);SPI_WriteData(0x00c7);	
+    SPI_WriteComm(0xd12a);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd12b);SPI_WriteData(0x00c9);	
+    SPI_WriteComm(0xd12c);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd12d);SPI_WriteData(0x00cb);	
+    SPI_WriteComm(0xd12e);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd12f);SPI_WriteData(0x00cb);	
+    SPI_WriteComm(0xd130);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd131);SPI_WriteData(0x00cb);	
+    SPI_WriteComm(0xd132);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd133);SPI_WriteData(0x00cc);	
+                                            
+    SPI_WriteComm(0xd200);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd201);SPI_WriteData(0x005d);	
+    SPI_WriteComm(0xd202);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd203);SPI_WriteData(0x006b);	
+    SPI_WriteComm(0xd204);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd205);SPI_WriteData(0x0084);	
+    SPI_WriteComm(0xd206);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd207);SPI_WriteData(0x009c);	
+    SPI_WriteComm(0xd208);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd209);SPI_WriteData(0x00b1);	
+    SPI_WriteComm(0xd20a);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd20b);SPI_WriteData(0x00d9);	
+    SPI_WriteComm(0xd20c);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd20d);SPI_WriteData(0x00fd);	
+    SPI_WriteComm(0xd20e);SPI_WriteData(0x0001);	
+    SPI_WriteComm(0xd20f);SPI_WriteData(0x0038);	
+    SPI_WriteComm(0xd210);SPI_WriteData(0x0001);	
+    SPI_WriteComm(0xd211);SPI_WriteData(0x0068);	
+    SPI_WriteComm(0xd212);SPI_WriteData(0x0001);	
+    SPI_WriteComm(0xd213);SPI_WriteData(0x00b9);	
+    SPI_WriteComm(0xd214);SPI_WriteData(0x0001);	
+    SPI_WriteComm(0xd215);SPI_WriteData(0x00fb);	
+    SPI_WriteComm(0xd216);SPI_WriteData(0x0002);	
+    SPI_WriteComm(0xd217);SPI_WriteData(0x0063);	
+    SPI_WriteComm(0xd218);SPI_WriteData(0x0002);	
+    SPI_WriteComm(0xd219);SPI_WriteData(0x00b9);	
+    SPI_WriteComm(0xd21a);SPI_WriteData(0x0002);	
+    SPI_WriteComm(0xd21b);SPI_WriteData(0x00bb);	
+    SPI_WriteComm(0xd21c);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd21d);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd21e);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd21f);SPI_WriteData(0x0046);	
+    SPI_WriteComm(0xd220);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd221);SPI_WriteData(0x0069);	
+    SPI_WriteComm(0xd222);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd223);SPI_WriteData(0x008f);	
+    SPI_WriteComm(0xd224);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd225);SPI_WriteData(0x00a4);	
+    SPI_WriteComm(0xd226);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd227);SPI_WriteData(0x00b9);	
+    SPI_WriteComm(0xd228);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd229);SPI_WriteData(0x00c7);	
+    SPI_WriteComm(0xd22a);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd22b);SPI_WriteData(0x00c9);	
+    SPI_WriteComm(0xd22c);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd22d);SPI_WriteData(0x00cb);	
+    SPI_WriteComm(0xd22e);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd22f);SPI_WriteData(0x00cb);	
+    SPI_WriteComm(0xd230);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd231);SPI_WriteData(0x00cb);	
+    SPI_WriteComm(0xd232);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd233);SPI_WriteData(0x00cc);	
+                                            
+                                            
+    SPI_WriteComm(0xd300);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd301);SPI_WriteData(0x005d);	
+    SPI_WriteComm(0xd302);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd303);SPI_WriteData(0x006b);	
+    SPI_WriteComm(0xd304);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd305);SPI_WriteData(0x0084);	
+    SPI_WriteComm(0xd306);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd307);SPI_WriteData(0x009c);	
+    SPI_WriteComm(0xd308);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd309);SPI_WriteData(0x00b1);	
+    SPI_WriteComm(0xd30a);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd30b);SPI_WriteData(0x00d9);	
+    SPI_WriteComm(0xd30c);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd30d);SPI_WriteData(0x00fd);	
+    SPI_WriteComm(0xd30e);SPI_WriteData(0x0001);	
+    SPI_WriteComm(0xd30f);SPI_WriteData(0x0038);	
+    SPI_WriteComm(0xd310);SPI_WriteData(0x0001);	
+    SPI_WriteComm(0xd311);SPI_WriteData(0x0068);	
+    SPI_WriteComm(0xd312);SPI_WriteData(0x0001);	
+    SPI_WriteComm(0xd313);SPI_WriteData(0x00b9);	
+    SPI_WriteComm(0xd314);SPI_WriteData(0x0001);	
+    SPI_WriteComm(0xd315);SPI_WriteData(0x00fb);	
+    SPI_WriteComm(0xd316);SPI_WriteData(0x0002);	
+    SPI_WriteComm(0xd317);SPI_WriteData(0x0063);	
+    SPI_WriteComm(0xd318);SPI_WriteData(0x0002);	
+    SPI_WriteComm(0xd319);SPI_WriteData(0x00b9);	
+    SPI_WriteComm(0xd31a);SPI_WriteData(0x0002);	
+    SPI_WriteComm(0xd31b);SPI_WriteData(0x00bb);	
+    SPI_WriteComm(0xd31c);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd31d);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd31e);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd31f);SPI_WriteData(0x0046);	
+    SPI_WriteComm(0xd320);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd321);SPI_WriteData(0x0069);	
+    SPI_WriteComm(0xd322);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd323);SPI_WriteData(0x008f);	
+    SPI_WriteComm(0xd324);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd325);SPI_WriteData(0x00a4);	
+    SPI_WriteComm(0xd326);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd327);SPI_WriteData(0x00b9);	
+    SPI_WriteComm(0xd328);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd329);SPI_WriteData(0x00c7);	
+    SPI_WriteComm(0xd32a);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd32b);SPI_WriteData(0x00c9);	
+    SPI_WriteComm(0xd32c);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd32d);SPI_WriteData(0x00cb);	
+    SPI_WriteComm(0xd32e);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd32f);SPI_WriteData(0x00cb);	
+    SPI_WriteComm(0xd330);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd331);SPI_WriteData(0x00cb);	
+    SPI_WriteComm(0xd332);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd333);SPI_WriteData(0x00cc);	
+                                            
+    SPI_WriteComm(0xd400);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd401);SPI_WriteData(0x005d);	
+    SPI_WriteComm(0xd402);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd403);SPI_WriteData(0x006b);	
+    SPI_WriteComm(0xd404);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd405);SPI_WriteData(0x0084);	
+    SPI_WriteComm(0xd406);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd407);SPI_WriteData(0x009c);	
+    SPI_WriteComm(0xd408);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd409);SPI_WriteData(0x00b1);	
+    SPI_WriteComm(0xd40a);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd40b);SPI_WriteData(0x00d9);	
+    SPI_WriteComm(0xd40c);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd40d);SPI_WriteData(0x00fd);	
+    SPI_WriteComm(0xd40e);SPI_WriteData(0x0001);	
+    SPI_WriteComm(0xd40f);SPI_WriteData(0x0038);	
+    SPI_WriteComm(0xd410);SPI_WriteData(0x0001);	
+    SPI_WriteComm(0xd411);SPI_WriteData(0x0068);	
+    SPI_WriteComm(0xd412);SPI_WriteData(0x0001);	
+    SPI_WriteComm(0xd413);SPI_WriteData(0x00b9);	
+    SPI_WriteComm(0xd414);SPI_WriteData(0x0001);	
+    SPI_WriteComm(0xd415);SPI_WriteData(0x00fb);	
+    SPI_WriteComm(0xd416);SPI_WriteData(0x0002);	
+    SPI_WriteComm(0xd417);SPI_WriteData(0x0063);	
+    SPI_WriteComm(0xd418);SPI_WriteData(0x0002);	
+    SPI_WriteComm(0xd419);SPI_WriteData(0x00b9);	
+    SPI_WriteComm(0xd41a);SPI_WriteData(0x0002);	
+    SPI_WriteComm(0xd41b);SPI_WriteData(0x00bb);	
+    SPI_WriteComm(0xd41c);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd41d);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd41e);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd41f);SPI_WriteData(0x0046);	
+    SPI_WriteComm(0xd420);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd421);SPI_WriteData(0x0069);	
+    SPI_WriteComm(0xd422);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd423);SPI_WriteData(0x008f);	
+    SPI_WriteComm(0xd424);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd425);SPI_WriteData(0x00a4);	
+    SPI_WriteComm(0xd426);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd427);SPI_WriteData(0x00b9);	
+    SPI_WriteComm(0xd428);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd429);SPI_WriteData(0x00c7);	
+    SPI_WriteComm(0xd42a);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd42b);SPI_WriteData(0x00c9);	
+    SPI_WriteComm(0xd42c);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd42d);SPI_WriteData(0x00cb);	
+    SPI_WriteComm(0xd42e);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd42f);SPI_WriteData(0x00cb);	
+    SPI_WriteComm(0xd430);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd431);SPI_WriteData(0x00cb);	
+    SPI_WriteComm(0xd432);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd433);SPI_WriteData(0x00cc);	
+                                            
+                                            
+    SPI_WriteComm(0xd500);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd501);SPI_WriteData(0x005d);	
+    SPI_WriteComm(0xd502);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd503);SPI_WriteData(0x006b);	
+    SPI_WriteComm(0xd504);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd505);SPI_WriteData(0x0084);	
+    SPI_WriteComm(0xd506);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd507);SPI_WriteData(0x009c);	
+    SPI_WriteComm(0xd508);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd509);SPI_WriteData(0x00b1);	
+    SPI_WriteComm(0xd50a);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd50b);SPI_WriteData(0x00D9);	
+    SPI_WriteComm(0xd50c);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd50d);SPI_WriteData(0x00fd);	
+    SPI_WriteComm(0xd50e);SPI_WriteData(0x0001);	
+    SPI_WriteComm(0xd50f);SPI_WriteData(0x0038);	
+    SPI_WriteComm(0xd510);SPI_WriteData(0x0001);	
+    SPI_WriteComm(0xd511);SPI_WriteData(0x0068);	
+    SPI_WriteComm(0xd512);SPI_WriteData(0x0001);	
+    SPI_WriteComm(0xd513);SPI_WriteData(0x00b9);	
+    SPI_WriteComm(0xd514);SPI_WriteData(0x0001);	
+    SPI_WriteComm(0xd515);SPI_WriteData(0x00fb);	
+    SPI_WriteComm(0xd516);SPI_WriteData(0x0002);	
+    SPI_WriteComm(0xd517);SPI_WriteData(0x0063);	
+    SPI_WriteComm(0xd518);SPI_WriteData(0x0002);	
+    SPI_WriteComm(0xd519);SPI_WriteData(0x00b9);	
+    SPI_WriteComm(0xd51a);SPI_WriteData(0x0002);	
+    SPI_WriteComm(0xd51b);SPI_WriteData(0x00bb);	
+    SPI_WriteComm(0xd51c);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd51d);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd51e);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd51f);SPI_WriteData(0x0046);	
+    SPI_WriteComm(0xd520);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd521);SPI_WriteData(0x0069);	
+    SPI_WriteComm(0xd522);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd523);SPI_WriteData(0x008f);	
+    SPI_WriteComm(0xd524);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd525);SPI_WriteData(0x00a4);	
+    SPI_WriteComm(0xd526);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd527);SPI_WriteData(0x00b9);	
+    SPI_WriteComm(0xd528);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd529);SPI_WriteData(0x00c7);	
+    SPI_WriteComm(0xd52a);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd52b);SPI_WriteData(0x00c9);	
+    SPI_WriteComm(0xd52c);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd52d);SPI_WriteData(0x00cb);	
+    SPI_WriteComm(0xd52e);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd52f);SPI_WriteData(0x00cb);	
+    SPI_WriteComm(0xd530);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd531);SPI_WriteData(0x00cb);	
+    SPI_WriteComm(0xd532);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd533);SPI_WriteData(0x00cc);	
+                                            
+    SPI_WriteComm(0xd600);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd601);SPI_WriteData(0x005d);	
+    SPI_WriteComm(0xd602);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd603);SPI_WriteData(0x006b);	
+    SPI_WriteComm(0xd604);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd605);SPI_WriteData(0x0084);	
+    SPI_WriteComm(0xd606);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd607);SPI_WriteData(0x009c);	
+    SPI_WriteComm(0xd608);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd609);SPI_WriteData(0x00b1);	
+    SPI_WriteComm(0xd60a);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd60b);SPI_WriteData(0x00d9);	
+    SPI_WriteComm(0xd60c);SPI_WriteData(0x0000);	
+    SPI_WriteComm(0xd60d);SPI_WriteData(0x00fd);	
+    SPI_WriteComm(0xd60e);SPI_WriteData(0x0001);	
+    SPI_WriteComm(0xd60f);SPI_WriteData(0x0038);	
+    SPI_WriteComm(0xd610);SPI_WriteData(0x0001);	
+    SPI_WriteComm(0xd611);SPI_WriteData(0x0068);	
+    SPI_WriteComm(0xd612);SPI_WriteData(0x0001);	
+    SPI_WriteComm(0xd613);SPI_WriteData(0x00b9);	
+    SPI_WriteComm(0xd614);SPI_WriteData(0x0001);	
+    SPI_WriteComm(0xd615);SPI_WriteData(0x00fb);	
+    SPI_WriteComm(0xd616);SPI_WriteData(0x0002);	
+    SPI_WriteComm(0xd617);SPI_WriteData(0x0063);	
+    SPI_WriteComm(0xd618);SPI_WriteData(0x0002);	
+    SPI_WriteComm(0xd619);SPI_WriteData(0x00b9);	
+    SPI_WriteComm(0xd61a);SPI_WriteData(0x0002);	
+    SPI_WriteComm(0xd61b);SPI_WriteData(0x00bb);	
+    SPI_WriteComm(0xd61c);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd61d);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd61e);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd61f);SPI_WriteData(0x0046);	
+    SPI_WriteComm(0xd620);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd621);SPI_WriteData(0x0069);	
+    SPI_WriteComm(0xd622);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd623);SPI_WriteData(0x008f);	
+    SPI_WriteComm(0xd624);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd625);SPI_WriteData(0x00a4);	
+    SPI_WriteComm(0xd626);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd627);SPI_WriteData(0x00b9);	
+    SPI_WriteComm(0xd628);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd629);SPI_WriteData(0x00c7);	
+    SPI_WriteComm(0xd62a);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd62b);SPI_WriteData(0x00c9);	
+    SPI_WriteComm(0xd62c);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd62d);SPI_WriteData(0x00cb);	
+    SPI_WriteComm(0xd62e);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd62f);SPI_WriteData(0x00cb);	
+    SPI_WriteComm(0xd630);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd631);SPI_WriteData(0x00cb);	
+    SPI_WriteComm(0xd632);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xd633);SPI_WriteData(0x00cc);	
+                                            
+    SPI_WriteComm(0xba00);SPI_WriteData(0x0024);	
+    SPI_WriteComm(0xba01);SPI_WriteData(0x0024);	
+    SPI_WriteComm(0xba02);SPI_WriteData(0x0024);	
+                                            
+    SPI_WriteComm(0xb900);SPI_WriteData(0x0024);	
+    SPI_WriteComm(0xb901);SPI_WriteData(0x0024);	
+    SPI_WriteComm(0xb902);SPI_WriteData(0x0024);	
+
+    SPI_WriteComm(0xf000);SPI_WriteData(0x0055);          
+    SPI_WriteComm(0xf001);SPI_WriteData(0x00aa);	
+    SPI_WriteComm(0xf002);SPI_WriteData(0x0052);	
+    SPI_WriteComm(0xf003);SPI_WriteData(0x0008);	
+    SPI_WriteComm(0xf004);SPI_WriteData(0x0000);	
+                                            
+                                            
+    SPI_WriteComm(0xb100);SPI_WriteData(0x00cc);	
+                                            
+                                            
+    SPI_WriteComm(0xbc00);SPI_WriteData(0x0005);	
+    SPI_WriteComm(0xbc01);SPI_WriteData(0x0005);	
+    SPI_WriteComm(0xbc02);SPI_WriteData(0x0005);	
+                                            
+    SPI_WriteComm(0xb800);SPI_WriteData(0x0001);	
+    SPI_WriteComm(0xb801);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xb802);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0xb803);SPI_WriteData(0x0003);	
+                                            
+                                            
+    SPI_WriteComm(0xbd02);SPI_WriteData(0x0007);	
+    SPI_WriteComm(0xbd03);SPI_WriteData(0x0031);	
+    SPI_WriteComm(0xbe02);SPI_WriteData(0x0007);	
+    SPI_WriteComm(0xbe03);SPI_WriteData(0x0031);	
+    SPI_WriteComm(0xbf02);SPI_WriteData(0x0007);	
+    SPI_WriteComm(0xbf03);SPI_WriteData(0x0031);	
+                                            
+                                            
+    SPI_WriteComm(0xff00);SPI_WriteData(0x00aa);	
+    SPI_WriteComm(0xff01);SPI_WriteData(0x0055);	
+    SPI_WriteComm(0xff02);SPI_WriteData(0x0025);	
+    SPI_WriteComm(0xff03);SPI_WriteData(0x0001);	
+
+
+    SPI_WriteComm(0xf304);SPI_WriteData(0x0011);	
+    SPI_WriteComm(0xf306);SPI_WriteData(0x0010);	
+    SPI_WriteComm(0xf308);SPI_WriteData(0x0000);	
+                                            
+    SPI_WriteComm(0x3500);SPI_WriteData(0x0000);	
+
+    SPI_WriteComm(0x3A00);SPI_WriteData(0x0077);
+    #if CONFIG_FB_HW_ROTATE_90
+    SPI_WriteComm(0x3600);SPI_WriteData(0x00A0);
+    #else
+    SPI_WriteComm(0x3600);SPI_WriteData(0x0000);
+    #endif
+
+    SPI_WriteComm(0x2a00);SPI_WriteData(0x0000);
+    SPI_WriteComm(0x2a01);SPI_WriteData(0x0000);
+    #if CONFIG_FB_HW_ROTATE_90
+    SPI_WriteComm(0x2a02);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0x2a03);SPI_WriteData(0x001f);	    
+    #else
+    SPI_WriteComm(0x2a02);SPI_WriteData(0x0001);	
+    SPI_WriteComm(0x2a03);SPI_WriteData(0x00df);	
+    #endif	
+
+                                            
+    SPI_WriteComm(0x2b00);SPI_WriteData(0x0000);   
+    SPI_WriteComm(0x2b01);SPI_WriteData(0x0000);	
+    #if CONFIG_FB_HW_ROTATE_90
+    SPI_WriteComm(0x2b02);SPI_WriteData(0x0001);	
+    SPI_WriteComm(0x2b03);SPI_WriteData(0x00df);	    
+    #else
+    SPI_WriteComm(0x2b02);SPI_WriteData(0x0003);	
+    SPI_WriteComm(0x2b03);SPI_WriteData(0x001f);   
+    #endif
+	
+
+
+
+    SPI_WriteComm(0x1100);
+    LCD_delay(120);
+
+    SPI_WriteComm(0x2900);
+
+    SPI_WriteComm(0x2c00);
+    SPI_WriteComm(0x3c00);
+
+	return 0;
+}
+
 DECLARE_GLOBAL_DATA_PTR;
 
 void i2c_init_board(void)
@@ -234,6 +727,9 @@ int board_init(void)
 	i2c_init_board();
 #endif
 
+#ifdef CONFIG_VIDEO_LCD_PANEL_SPI
+	soft_spi_board_init();
+#endif
 	/* Uses dm gpio code so do this here and not in i2c_init_board() */
 	return soft_i2c_board_init();
 }

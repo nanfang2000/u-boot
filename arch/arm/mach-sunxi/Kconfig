@@ -745,6 +745,13 @@ config VIDEO_LCD_PANEL_I2C
 	Say y here if the LCD panel needs to be configured via i2c. This
 	will add a bitbang i2c controller using gpios to talk to the LCD.
 
+config VIDEO_LCD_PANEL_SPI
+	bool "LCD panel needs to be configured via SPI"
+	default n
+	---help---
+	Say y here if the LCD panel needs to be configured via SPI. This
+	will add a bitbang SPI controller using gpios to talk to the LCD.
+
 config VIDEO_LCD_PANEL_I2C_SDA
 	string "LCD panel i2c interface SDA pin"
 	depends on VIDEO_LCD_PANEL_I2C

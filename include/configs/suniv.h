@@ -14,7 +14,10 @@
  */
 #include <configs/sunxi-common.h>
 
+#define CONFIG_SYS_REDUNDAND_ENVIRONMENT
 #define CONFIG_VIDEO_LOGO
 #define CONFIG_VIDEO_BMP_LOGO
-
+#define CONFIG_SPLASH_SCREEN
+#define CONFIG_SPLASH_SCREEN_ALIGN
+#define CONFIG_SPLASH_SOURCE
 #endif /* __CONFIG_H */

@@ -104,6 +104,9 @@ const uchar default_environment[] = {
 	"soc="		CONFIG_SYS_SOC			"\0"
 #endif
 #endif
+	"splashimage" "0x80200000" 			"\0"
+	"splashfile" "logo.bmp" 			"\0"
+	"splashsource" "mmc_fs" 			"\0"
 #ifdef	CONFIG_EXTRA_ENV_SETTINGS
 	CONFIG_EXTRA_ENV_SETTINGS
 #endif

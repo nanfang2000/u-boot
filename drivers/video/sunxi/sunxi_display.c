@@ -610,8 +610,6 @@ static void sunxi_lcdc_backlight_enable(void)
 #endif
 	if (pin >= 0)
 		gpio_direction_output(pin, PWM_ON);
-
-	printf("sunxi_lcdc_backlight_enable PWM Pin:%d\n",pin);
 }
 
 static void sunxi_ctfb_mode_to_display_timing(const struct ctfb_res_modes *mode,

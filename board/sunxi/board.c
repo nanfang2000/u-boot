@@ -139,7 +139,6 @@ static void LCD_Reset(void)
 static int soft_spi_board_init(void)
 {
 	int ret;
-	printf("soft_spi_board_init\n");
 	// SPI 3 lines for LCD driver chipe initialization
 	sunxi_gpio_set_cfgpin(SUNXI_GPE(5), SUNXI_GPIO_OUTPUT); //RST
 	sunxi_gpio_set_cfgpin(SUNXI_GPE(7), SUNXI_GPIO_OUTPUT); //CS
@@ -1069,8 +1068,10 @@ void sunxi_board_init(void)
 	 * Only clock up the CPU to full speed if we are reasonably
 	 * assured it's being powered with suitable core voltage
 	 */
-	if (!power_failed)
+	if (!power_failed) {
+		printf("Set CPU frequency: %d\n", CONFIG_SYS_CLK_FREQ);
 		clock_set_pll1(CONFIG_SYS_CLK_FREQ);
+	}
 	else
 		printf("Failed to set core voltage! Can't set CPU frequency\n");
 }
